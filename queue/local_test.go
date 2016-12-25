@@ -7,6 +7,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func getQueueContents(q *Local) [][]byte {
+	qMessages := make([][]byte, 0, len(q.queue))
+	for _, id := range q.queue {
+		qMessages = append(qMessages, q.messages[id])
+	}
+	return qMessages
+}
+
 func TestLocalSendMessage(t *testing.T) {
 	Convey("Given a local queue", t, func() {
 		q := NewLocal()
@@ -20,7 +28,7 @@ func TestLocalSendMessage(t *testing.T) {
 			})
 
 			Convey("Then it should be in the queue", func() {
-				So(q.queue, ShouldContain, message)
+				So(getQueueContents(q), ShouldContain, message)
 			})
 		})
 
@@ -31,7 +39,7 @@ func TestLocalSendMessage(t *testing.T) {
 			}
 
 			Convey("Then they should all be in the queue", func() {
-				So(q.queue, ShouldResemble, messages)
+				So(getQueueContents(q), ShouldResemble, messages)
 			})
 		})
 	})
@@ -42,10 +50,11 @@ func TestLocalReceiveMessage(t *testing.T) {
 		q := NewLocal()
 		sentMessage1 := []byte("foo")
 		sentMessage2 := []byte("bar")
-		q.queue = [][]byte{sentMessage1, sentMessage2}
+		q.SendMessage(sentMessage1)
+		q.SendMessage(sentMessage2)
 
 		Convey("When a message is received with no timeout", func() {
-			id, message, err := q.ReceiveMessage(0)
+			_, message, err := q.ReceiveMessage(0)
 
 			Convey("Then there should not be an error", func() {
 				So(err, ShouldBeNil)
@@ -53,10 +62,6 @@ func TestLocalReceiveMessage(t *testing.T) {
 
 			Convey("Then it should match the original", func() {
 				So(message, ShouldResemble, sentMessage1)
-			})
-
-			Convey("Then `id` should be an empty string", func() {
-				So(id, ShouldEqual, "")
 			})
 
 			Convey("Then the queue should no longer contain the message", func() {
@@ -96,7 +101,7 @@ func TestLocalReceiveMessage(t *testing.T) {
 				time.Sleep(timeout)
 
 				Convey("Then the queue should contain the message", func() {
-					So(q.queue, ShouldContain, sentMessage1)
+					So(getQueueContents(q), ShouldContain, sentMessage1)
 				})
 
 				Convey("Then the message should be the next one received", func() {
