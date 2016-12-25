@@ -7,7 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// Local implements Interface as an in-memory queue.
+// Local implements queue.Interface as an in-memory queue.
 //
 // No guarantees are made about performance or efficiency.
 type Local struct {

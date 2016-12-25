@@ -6,6 +6,8 @@ import (
 )
 
 // Interface represents the minimum implementation of an asynchronous queue.
+//
+// All methods should be safe for concurrent access.
 type Interface interface {
 	SendMessage(message []byte) error
 	ReceiveMessage(timeout time.Duration) (id string, message []byte, err error)
