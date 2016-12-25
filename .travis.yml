@@ -4,5 +4,8 @@ go:
     - 1.7.x
     - tip
 
+script:
+  - go test -v -race -coverprofile=coverage.txt
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
