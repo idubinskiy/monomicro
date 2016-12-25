@@ -3,7 +3,3 @@ language: go
 go:
     - 1.7.x
     - tip
-
-addons:
-    code_climate:
-        repo_token: 37ea83cb4a2ed8398a7df500ffbcf612130caf65bb636ef71d52288a08d99674
