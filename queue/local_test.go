@@ -132,12 +132,13 @@ func TestLocalReceiveMessage(t *testing.T) {
 func TestLocalDeleteMessage(t *testing.T) {
 	Convey("Given a local queue with a receive timer for a message", t, func() {
 		q := NewLocal()
-		id := "foo"
 		timeout := 100 * time.Millisecond
-		timer := time.NewTimer(timeout)
-		q.received[id] = timer
+		sentMessage := []byte("foo")
+		q.SendMessage(sentMessage)
+		id, _, _ := q.ReceiveMessage(timeout)
+		timer := q.received[id]
 
-		Convey("When the message is deleted", func() {
+		Convey("When the message is deleted before the timeout expires", func() {
 			q.DeleteMessage(id)
 
 			Convey("Then the queue should not have a receive timer for the message", func() {
@@ -148,6 +149,15 @@ func TestLocalDeleteMessage(t *testing.T) {
 				time.Sleep(timeout)
 
 				So(timer.C, ShouldBeEmpty)
+			})
+		})
+
+		Convey("When the message is deleted after the timeout expires", func() {
+			time.Sleep(timeout)
+			q.DeleteMessage(id)
+
+			Convey("Then the queue should not contain the message", func() {
+				So(getQueueContents(q), ShouldNotContain, sentMessage)
 			})
 		})
 	})
