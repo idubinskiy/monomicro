@@ -108,10 +108,16 @@ func (l *Local) DeleteMessage(id string) error {
 	l.receivedMutex.Lock()
 	timer, ok := l.received[id]
 	if ok {
-		timer.Stop()
+		if !timer.Stop() {
+			select {
+			case <-timer.C:
+			default:
+			}
+		}
 		delete(l.received, id)
 	}
 	l.receivedMutex.Unlock()
+
 	l.messagesMutex.Lock()
 	delete(l.messages, id)
 	l.messagesMutex.Unlock()
