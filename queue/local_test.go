@@ -8,6 +8,10 @@ import (
 )
 
 func getQueueContents(q *Local) [][]byte {
+	q.queueMutex.Lock()
+	defer q.queueMutex.Unlock()
+	q.messagesMutex.RLock()
+	defer q.messagesMutex.RUnlock()
 	qMessages := make([][]byte, 0, len(q.queue))
 	for _, id := range q.queue {
 		qMessages = append(qMessages, q.messages[id])
@@ -90,10 +94,14 @@ func TestLocalReceiveMessage(t *testing.T) {
 			})
 
 			Convey("Then the queue should no longer contain the message", func() {
+				q.queueMutex.Lock()
+				defer q.queueMutex.Unlock()
 				So(q.queue, ShouldNotContain, sentMessage1)
 			})
 
 			Convey("Then the queue should have a receive timer for the message", func() {
+				q.receivedMutex.RLock()
+				defer q.receivedMutex.RUnlock()
 				So(q.received, ShouldContainKey, id)
 			})
 
@@ -110,6 +118,8 @@ func TestLocalReceiveMessage(t *testing.T) {
 				})
 
 				Convey("Then the queue should not have a receive timer for the message", func() {
+					q.receivedMutex.RLock()
+					defer q.receivedMutex.RUnlock()
 					So(q.received, ShouldNotContainKey, id)
 				})
 			})
@@ -136,7 +146,9 @@ func TestLocalDeleteMessage(t *testing.T) {
 		sentMessage := []byte("foo")
 		q.SendMessage(sentMessage)
 		id, _, _ := q.ReceiveMessage(timeout)
+		q.receivedMutex.RLock()
 		timer := q.received[id]
+		q.receivedMutex.RUnlock()
 
 		Convey("When the message is deleted before the timeout expires", func() {
 			q.DeleteMessage(id)
